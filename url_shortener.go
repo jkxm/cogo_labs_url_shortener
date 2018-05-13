@@ -13,44 +13,18 @@ import ("fmt"
 		"io/ioutil"
 	)
 
-// db, err := sql.Open("mysql", "root:password@tcp(127.0.0.1:3306)/")
-// if err != nil {
-// 	panic(err.Error())
-// }
-// defer db.Close()
-// fmt.Println("connected")
+// all possible characters
 var characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
 var tpl *template.Template
-type Page struct{
-	Title string
-	Body[] byte
-}
+
 
 func init() {
+	// intitalize template
 	tpl = template.Must(template.ParseGlob("template/*.html"))
-
-	// db, err := sql.Open("mysql", "root:password@tcp(127.0.0.1:3306)/")
-	// if err != nil {
-	// 	panic(err.Error())
-	// }
-	// defer db.Close()
-
-
 }
 
-func (p *Page) save() error {
-    filename := p.Title + ".txt"
-    return ioutil.WriteFile(filename, p.Body, 0600)
-}
 
-func loadPage(title string) (*Page, error) {
-    filename := title + ".txt"
-    body, err := ioutil.ReadFile(filename)
-    if err != nil {
-        return nil, err
-    }
-    return &Page{Title: title, Body: body}, nil
-}
 
 func id_to_shortener(id int) string{
 	var shorturl = ""
@@ -58,6 +32,9 @@ func id_to_shortener(id int) string{
 		return string(characters[0])
 	} else{
 		for id > 0{
+			// convert urlid to shortenedurl by modular division on int id and using result to retrieve index from 
+			// character string to concatentate to shorturl to produce the shortened url
+
 			shorturl = string(characters[id%62]) + shorturl
 			id = id/62		
 			// fmt.Println(id)
@@ -69,6 +46,9 @@ func id_to_shortener(id int) string{
 func shortened_to_id(shortened string) int{
 
 	var id, i, strlength = 0, 0, len(shortened)-1
+	// convert shortenedurl to url id by looping through the shortenedurl and finding that character's index on the 
+	// character string. Then multiplied the character index by 62 to the i power, where i represents the place on the 
+	// shorturl
 	for i <= strlength{
 		id += strings.Index(characters, string(shortened[i])) * int(math.Pow(62, float64(strlength - i)))
         fmt.Println(id, string(shortened[i]), strlength)
@@ -80,6 +60,7 @@ func shortened_to_id(shortened string) int{
 }
 
 func index_handle(w http.ResponseWriter, r *http.Request){
+	// initial template to load 
 	tpl.ExecuteTemplate(w, "index.html", nil)
 }
 
@@ -92,15 +73,12 @@ func shortener_handle(w http.ResponseWriter, r *http.Request){
 	}
 	defer db.Close()
 
-
+// get the largest urlid to get the new shortened url
 	stmt, er := db.Prepare("SELECT urlid FROM url ORDER BY urlid DESC LIMIT 0, 1")
 	if er != nil{
 		log.Fatal(er)
 	}
-
-
 	er = stmt.QueryRow().Scan(&s)
-
 	switch{
 		case er == sql.ErrNoRows:
         	fmt.Printf("no ID.")
@@ -110,20 +88,15 @@ func shortener_handle(w http.ResponseWriter, r *http.Request){
 		    fmt.Printf(string(s))
 	}
 
+
+// on post, insert new longurl and the shortenedurl
 	if r.Method == "POST"{
 		r.ParseForm()
 		var longurl = r.Form["longurl"]
 		
 		shortenedid :=  id_to_shortener(s+1)
 		fmt.Println(longurl, s)
-		// db.Query("insert into url (longurl, shorturl) values (?, ?)")
-		// db.Close()
-		// stmt, er = db.Prepare("insert into url (longurl, shorturl) values (?, ?)")
-		// if er != nil{
-		// 	log.Fatal(er)
-		// }
 
-		// er = stmt.Exec(longurl[0], shortenedid)
 		_, er := db.Exec("insert into url (longurl, shorturl) values (?, ?)", longurl[0], shortenedid)
 		switch{
 			case er == sql.ErrNoRows:
@@ -146,11 +119,12 @@ func short_to_url_handler(w http.ResponseWriter, r *http.Request) {
 		panic(err.Error())
 	}
 	defer db.Close()
+	//get shorturl from parameter in the requested url 
 	shorturl := r.URL.Query().Get("short")
 	log.Println("short to url", string(shorturl))
 	urlid := shortened_to_id(string(shorturl))
 
-
+	//retrieve longurl from db by converting shorturl to urlid 
 	stmt, er := db.Prepare("select longurl from url where urlid=?")
 	if er != nil{
 		log.Fatal(er)
@@ -161,6 +135,7 @@ func short_to_url_handler(w http.ResponseWriter, r *http.Request) {
 
 
 	http.Redirect(w, r, longurl, 301)
+
 	tpl.ExecuteTemplate(w, "index.html", shorturl)
 
 
