@@ -1,0 +1,16 @@
+<h1> Justin Kim's Url Shortener </h1>
+
+
+<form action="/shortener_handle" method="post">
+	<table>
+		<tr>
+			<td>Enter URL to shorten</td>
+			<td><input type="text" name="longurl" id="longurl"></td>
+		</tr>
+		<tr>
+			<td>Shortened Url</td>
+			<td><a href="./shorttolong/?short={{.}}" target="_blank">{{.}}</a></td>
+		</tr>
+	</table>
+	<input type="submit" name="shorten" value="Shorten">
+</form>
