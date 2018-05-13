@@ -10,7 +10,7 @@ import ("fmt"
 		"net/http"
 		"log"
 		"html/template"
-		"io/ioutil"
+		// "io/ioutil"
 	)
 
 // all possible characters
