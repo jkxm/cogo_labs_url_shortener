@@ -67,7 +67,7 @@ func index_handle(w http.ResponseWriter, r *http.Request){
 func shortener_handle(w http.ResponseWriter, r *http.Request){
 	var s int
 	// var largest string
-	db, err := sql.Open("mysql", "root:password@tcp(127.0.0.1:3306)/urlshortener")
+	db, err := sql.Open("mysql", "root:password@tcp(172.17.0.2:3306)/urlshortener")
 	if err != nil {
 		panic(err.Error())
 	}
@@ -114,7 +114,7 @@ func shortener_handle(w http.ResponseWriter, r *http.Request){
 
 func short_to_url_handler(w http.ResponseWriter, r *http.Request) {
 	var longurl string
-	db, err := sql.Open("mysql", "root:password@tcp(127.0.0.1:3306)/urlshortener")
+	db, err := sql.Open("mysql", "root:password@tcp(172.17.0.2:3306)/urlshortener")
 	if err != nil {
 		panic(err.Error())
 	}
